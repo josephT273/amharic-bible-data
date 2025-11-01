@@ -23,32 +23,54 @@ function readFile(filename: string): FileReadingType {
 	return JSON.parse(raw);
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function main() {
 	for (const file of bibleFiles) {
 		const bible = readFile(file);
-		const _bibleName = await db
-			.insert(bookName)
-			.values({
-				name: bible.title,
-				chapters: bible.chapters.length,
-			})
-			.returning();
 
-		bible.chapters.forEach((chapter) => {
-			chapter.verses.forEach(async (verse) => {
-				await db
-					.insert(verses)
-					.values({
+		console.log(`📖 Starting ${bible.title}`);
+
+		await db.transaction(async (tx) => {
+			const [insertedBook] = await tx
+				.insert(bookName)
+				.values({
+					name: bible.title,
+					chapters: bible.chapters.length,
+				})
+				.returning();
+
+			const allVerses: {
+				chapter: string;
+				verse: string;
+				text: string;
+				bookID: number | undefined;
+			}[] = [];
+
+			for (const chapter of bible.chapters) {
+				for (const verse of chapter.verses) {
+					allVerses.push({
 						chapter: chapter.chapter.toString(),
 						text: verse.text,
 						verse: verse.verse,
-						bookID: _bibleName[0]?.id,
-					})
-					.returning();
-			});
+						bookID: insertedBook?.id,
+					});
+				}
+			}
+
+			const BATCH_SIZE = 300;
+
+			for (let i = 0; i < allVerses.length; i += BATCH_SIZE) {
+				const batch = allVerses.slice(i, i + BATCH_SIZE);
+				await tx.insert(verses).values(batch);
+			}
+
+			console.log(`${bible.title} completed (${allVerses.length} verses)`);
 		});
-		console.log(`${_bibleName[0]?.name} is done`);
+
+		await sleep(500);
 	}
+	console.log("🎉 All books imported successfully!");
 }
 
-main();
+main().catch((err) => console.error(err));
