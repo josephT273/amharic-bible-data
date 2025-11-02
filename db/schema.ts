@@ -1,7 +1,14 @@
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export const translation = sqliteTable("translation", {
+	id: int().primaryKey({autoIncrement: true}),
+	name: text().notNull(),
+	language: text().notNull(),
+})
+
 export const bookName = sqliteTable("book_name", {
 	id: int().primaryKey({ autoIncrement: true }),
+	translation: int().references(() => translation.id, {onDelete: 'cascade'}),
 	name: text().notNull(),
 	chapters: int().notNull(),
 });
