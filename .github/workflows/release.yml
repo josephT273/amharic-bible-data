@@ -27,7 +27,7 @@ jobs:
             - name: Run Bun scripts
               run: |
                   bun run index.ts
-                  bun run another-script.ts
+                  bun run kjv.ts
 
             - name: Verify SQLite file exists
               run: ls -lh ./*.sqlite
