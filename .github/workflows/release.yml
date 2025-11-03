@@ -1,9 +1,9 @@
-name: Create Release with SQLite
+name: Auto Release with SQLite (Root File)
 
 on:
     push:
-        tags:
-            - "v*"
+        branches:
+            - main
 
 jobs:
     build-and-release:
@@ -21,17 +21,21 @@ jobs:
             - name: Install dependencies
               run: bun install
 
-            - name: Run build scripts
+            - name: Run Bun scripts
               run: |
                   bun run index.ts
                   bun run kjv.ts
 
             - name: Verify SQLite file exists
-              run: ls -lh ./dist/*.sqlite
+              run: ls -lh ./*.sqlite
 
-            - name: Create GitHub release
-              id: create_release
+            - name: Create or Update GitHub Release
               uses: softprops/action-gh-release@v2
               with:
+                  tag_name: latest
+                  name: "Automated Release"
+                  body: "Auto release for commit ${{ github.sha }}"
                   files: |
-                      dist/*.sqlite
+                      ./*.sqlite
+                  draft: false
+                  prerelease: false
