@@ -1,6 +1,7 @@
 import fs from "node:fs";
-import db, { bibleFiles } from "./config";
+import db from "./config";
 import { bookName, translation, verses } from "./db/schema";
+import { bibleFiles } from "./books";
 
 interface VerseType {
 	verse: string;
@@ -27,16 +28,17 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
 	const [insertedTranslation] = await db.insert(translation).values({
-				language: "Amharic",
-				name: "እማ2003",
-			}).returning();
+		language: "Amharic",
+		name: "እማ2003",
+	}).returning();
+
 	for (const file of bibleFiles) {
 		const bible = readFile(file);
 
 		console.log(`📖 Starting ${bible.title}`);
 
 		await db.transaction(async (tx) => {
-			
+
 
 			const [insertedBook] = await tx
 				.insert(bookName)
