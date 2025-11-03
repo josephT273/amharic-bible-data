@@ -5,6 +5,9 @@ on:
         branches:
             - main
 
+permissions:
+    contents: write
+
 jobs:
     build-and-release:
         runs-on: ubuntu-latest
@@ -24,7 +27,7 @@ jobs:
             - name: Run Bun scripts
               run: |
                   bun run index.ts
-                  bun run kjv.ts
+                  bun run another-script.ts
 
             - name: Verify SQLite file exists
               run: ls -lh ./*.sqlite
@@ -39,3 +42,5 @@ jobs:
                       ./*.sqlite
                   draft: false
                   prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
