@@ -27,7 +27,7 @@ jobs:
             - name: Remove old SQLite database
               run: |
                   echo "🧹 Removing old SQLite database..."
-                  rm -f ./bible.sqlite
+                  rm -f ./Holy_bible.sqlite
                   echo "✅ Old database removed."
 
             - name: Generate migration files
@@ -35,7 +35,7 @@ jobs:
                   echo "🧩 Generating Drizzle migrations..."
                   bunx drizzle-kit generate
               env:
-                  DATABASE_URL: file:./bible.sqlite
+                  DATABASE_URL: file:./Holy_bible.sqlite
 
             - name: Run DB Schema Migration (Force Recreate)
               run: |
@@ -43,25 +43,25 @@ jobs:
                   bunx drizzle-kit push --force
                   echo "✅ Migration complete."
                   echo "🗂️ Tables created:"
-                  sqlite3 bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
+                  sqlite3 Holy_bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
               env:
-                  DATABASE_URL: file:./bible.sqlite
+                  DATABASE_URL: file:./Holy_bible.sqlite
 
             - name: Import Bible data into SQLite
               run: |
                   echo "📖 Importing Bible data..."
                   bun run migrate_translation.ts
               env:
-                  DATABASE_URL: file:./bible.sqlite
+                  DATABASE_URL: file:./Holy_bible.sqlite
 
             - name: Verify SQLite file
               run: |
                   echo "🔍 Verifying database..."
                   ls -lh ./*.sqlite
                   echo "🗂️ Tables in database:"
-                  sqlite3 bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
+                  sqlite3 Holy_bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
                   echo "📊 Row count in metadata:"
-                  sqlite3 bible.sqlite "SELECT count(*) FROM metadata;"
+                  sqlite3 Holy_bible.sqlite "SELECT count(*) FROM metadata;"
               continue-on-error: true
 
             - name: Create or Update GitHub Release
