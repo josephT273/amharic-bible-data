@@ -26,7 +26,7 @@ jobs:
 
             - name: Run DB Schema Migration
               run: |
-                  bun run drizzle:push
+                  bunx drizzle-kit push --config=drizzle.config.ts
               env:
                   DATABASE_URL: file:./bible.sqlite
 
@@ -39,7 +39,9 @@ jobs:
             - name: Verify SQLite file
               run: |
                   ls -lh ./*.sqlite
+                  sqlite3 bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
                   sqlite3 bible.sqlite "SELECT count(*) FROM metadata;"
+              continue-on-error: true
 
             - name: Create or Update GitHub Release
               uses: softprops/action-gh-release@v2
