@@ -32,7 +32,7 @@ jobs:
             - name: Run DB Schema Migration
               run: |
                   echo "🏗️ Running Drizzle schema migration..."
-                  bunx drizzle-kit push --config=drizzle.config.ts
+                  bunx drizzle-kit push
               env:
                   DATABASE_URL: file:./bible.sqlite
 
