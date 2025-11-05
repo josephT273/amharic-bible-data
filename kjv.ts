@@ -1,7 +1,7 @@
 import fs from "node:fs";
+import { kjv } from "./books";
 import db from "./config";
 import { bookName, translation, verses } from "./db/schema";
-import { kjv } from "./books";
 
 interface VerseType {
 	verse: string;
@@ -14,22 +14,25 @@ interface ChaptersType {
 }
 
 interface KJVData {
-	book: string,
-	chapters: ChaptersType[]
+	book: string;
+	chapters: ChaptersType[];
 }
 
 function readFile(filename: string): KJVData {
-	const raw = fs.readFileSync(`./Bible-kjv/${filename}`, "utf8");
+	const raw = fs.readFileSync(`./bibles/Bible-kjv/${filename}`, "utf8");
 	return JSON.parse(raw);
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-	const [insertedTranslation] = await db.insert(translation).values({
-		language: "English",
-		name: "KJV",
-	}).returning();
+	const [insertedTranslation] = await db
+		.insert(translation)
+		.values({
+			language: "English",
+			name: "KJV",
+		})
+		.returning();
 
 	for (const file of kjv) {
 		const bible = readFile(file);
@@ -37,14 +40,12 @@ async function main() {
 		console.log(`📖 Starting ${bible.book}`);
 
 		await db.transaction(async (tx) => {
-
-
 			const [insertedBook] = await tx
 				.insert(bookName)
 				.values({
 					name: bible.book,
 					chapters: bible.chapters.length,
-					translation: insertedTranslation?.id
+					translation: insertedTranslation?.id,
 				})
 				.returning();
 
