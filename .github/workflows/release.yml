@@ -1,45 +1,55 @@
 name: Auto Release with SQLite (Root File)
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
+    build-and-release:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v1
+              with:
+                  bun-version: latest
 
-      - name: Install dependencies
-        run: bun install
+            - name: Install dependencies
+              run: bun install
 
-      - name: Run Bun scripts
-        run: |
-          bun run migrate_translation.ts
+            - name: Run DB Schema Migration
+              run: |
+                  bun run drizzle:push
+              env:
+                  DATABASE_URL: file:./bible.sqlite
 
-      - name: Verify SQLite file exists
-        run: ls -lh ./*.sqlite
+            - name: Import Bible data into SQLite
+              run: |
+                  bun run migrate_books.ts
+              env:
+                  DATABASE_URL: file:./bible.sqlite
 
-      - name: Create or Update GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: "Automated Release"
-          body: "Auto release for commit ${{ github.sha }}"
-          files: |
-            ./*.sqlite
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Verify SQLite file
+              run: |
+                  ls -lh ./*.sqlite
+                  sqlite3 bible.sqlite "SELECT count(*) FROM metadata;"
+
+            - name: Create or Update GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: latest
+                  name: "Automated Release"
+                  body: "Auto release for commit ${{ github.sha }}"
+                  files: |
+                      ./*.sqlite
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
