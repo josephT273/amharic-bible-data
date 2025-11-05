@@ -1,21 +1,37 @@
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export const translation = sqliteTable("translation", {
-	id: int().primaryKey({autoIncrement: true}),
+
+export const metadata = sqliteTable("metadata", {
+	id: int().primaryKey({ autoIncrement: true }).notNull(),
 	name: text().notNull(),
-	language: text().notNull(),
+	shortname: text().notNull(),
+	module: text().notNull(),
+	year: text().notNull(),
+	publisher: text(),
+	owner: text(),
+	description: text(),
+	lang: text(),
+	lang_short: text(),
+	copyright: text(),
+	copyright_statement: text(),
+	url: text(),
+	citation_limit: text(),
+	restrict: text(),
+	italics: text(),
+	strongs: text(),
+	red_letter: text(),
+	paragraph: text(),
+	official: text(),
+	research: text().notNull(),
+	module_version: text()
 })
 
-export const bookName = sqliteTable("book_name", {
-	id: int().primaryKey({ autoIncrement: true }),
-	translation: int().references(() => translation.id, {onDelete: 'cascade'}),
-	name: text().notNull(),
-	chapters: int().notNull(),
-});
 
 export const verses = sqliteTable("verses", {
 	id: int().primaryKey({ autoIncrement: true }),
-	bookID: int().references(() => bookName.id, { onDelete: "cascade" }),
+	metadataID: int().notNull().references(() => metadata.id, { onDelete: 'cascade' }),
+	book_name: text().notNull(),
+	book: text().notNull(),
 	chapter: text().notNull(),
 	verse: text().notNull(),
 	text: text().notNull(),
