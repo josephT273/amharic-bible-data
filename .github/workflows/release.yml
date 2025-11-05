@@ -24,26 +24,25 @@ jobs:
             - name: Install dependencies
               run: bun install
 
-            - name: Clean old SQLite database
+            - name: Remove old SQLite database
               run: |
                   echo "🧹 Removing old SQLite database..."
-                  rm -f bible.sqlite
-                  rm -rf drizzle/migrations/.snapshot 2>/dev/null || true
-                  ls -lh
+                  rm -f ./bible.sqlite
+                  echo "✅ Old database removed."
 
-            - name: Generate migration (ensure schema up-to-date)
+            - name: Generate migration files
               run: |
-                  echo "🧩 Generating new migration..."
-                  bunx drizzle-kit generate:sqlite --config=drizzle.config.ts
+                  echo "🧩 Generating Drizzle migrations..."
+                  bunx drizzle-kit generate
               env:
                   DATABASE_URL: file:./bible.sqlite
 
-            - name: Run DB Schema Migration
+            - name: Run DB Schema Migration (Force Recreate)
               run: |
-                  echo "🏗️ Applying Drizzle migrations..."
-                  bunx drizzle-kit push --config=drizzle.config.ts
-                  echo "✅ Migration completed."
-                  echo "🗂️ Tables after migration:"
+                  echo "🏗️ Running Drizzle migration..."
+                  bunx drizzle-kit push --force
+                  echo "✅ Migration complete."
+                  echo "🗂️ Tables created:"
                   sqlite3 bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
               env:
                   DATABASE_URL: file:./bible.sqlite
