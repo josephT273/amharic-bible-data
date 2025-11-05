@@ -118,7 +118,7 @@ Each file inside `amharic_bible/` must follow this structure:
       "title": "ዘፍጥረት 1",
       "verses": [
         { "verse": "1", "text": "መጀመሪያ እግዚአብሔር..." },
-        { "verse": "2", "text": "እናም ምድር ባዶ ነበረች..." }
+        { "verse": "2", "text": "ምድር ባዶ ነበረች..." }
       ]
     }
   ]
