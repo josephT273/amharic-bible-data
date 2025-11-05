@@ -39,7 +39,7 @@ jobs:
             - name: Import Bible data into SQLite
               run: |
                   echo "📖 Importing Bible data..."
-                  bun run migrate_books.ts
+                  bun run migrate_translation.ts
               env:
                   DATABASE_URL: file:./bible.sqlite
 
