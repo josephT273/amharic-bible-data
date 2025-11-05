@@ -24,22 +24,32 @@ jobs:
             - name: Install dependencies
               run: bun install
 
+            - name: Remove old SQLite file
+              run: |
+                  echo "🧹 Removing old SQLite database file..."
+                  rm -f ./bible.sqlite
+
             - name: Run DB Schema Migration
               run: |
+                  echo "🏗️ Running Drizzle schema migration..."
                   bunx drizzle-kit push --config=drizzle.config.ts
               env:
                   DATABASE_URL: file:./bible.sqlite
 
             - name: Import Bible data into SQLite
               run: |
+                  echo "📖 Importing Bible data..."
                   bun run migrate_books.ts
               env:
                   DATABASE_URL: file:./bible.sqlite
 
             - name: Verify SQLite file
               run: |
+                  echo "🔍 Verifying database..."
                   ls -lh ./*.sqlite
+                  echo "🗂️ Tables in database:"
                   sqlite3 bible.sqlite "SELECT name FROM sqlite_master WHERE type='table';"
+                  echo "📊 Row count in metadata:"
                   sqlite3 bible.sqlite "SELECT count(*) FROM metadata;"
               continue-on-error: true
 
