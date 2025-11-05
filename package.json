@@ -3,6 +3,11 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "drizzle:push": "drizzle-kit push",
+    "migrate:books": "bun run migrate_books.ts",
+    "migrate:translations": "bun run migrate_translation.ts"
+  },
   "devDependencies": {
     "@types/bun": "^1.3.1",
     "drizzle-kit": "^0.31.6"
