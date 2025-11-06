@@ -1,8 +1,8 @@
-import type { InferInsertModel } from "drizzle-orm";
 import fs from "node:fs";
 import path from "node:path";
-import { metadata, verses } from "./db/schema";
+import type { InferInsertModel } from "drizzle-orm";
 import db from "./config";
+import { metadata, verses } from "./db/schema";
 
 const ROOT = "./bibles";
 
@@ -14,7 +14,7 @@ const EXCLUDED = new Set([
     "amharic_bible",
 ]);
 
-function readDirSafe(p: string) {
+export function readDirSafe(p: string) {
     try {
         return fs.readdirSync(p, "utf8");
     } catch {
@@ -22,11 +22,11 @@ function readDirSafe(p: string) {
     }
 }
 
-function readJSON(filePath: string) {
+export function readJSON(filePath: string) {
     try {
         const raw = fs.readFileSync(filePath, "utf8");
         return JSON.parse(raw);
-    } catch (err) {
+    } catch (_err) {
         console.warn(`⚠️ Skipped invalid JSON: ${filePath}`);
         return null;
     }
@@ -46,11 +46,11 @@ function* walkBibles(root: string) {
     }
 }
 
-type MetadataType = InferInsertModel<typeof metadata>;
-type VerseType = InferInsertModel<typeof verses>;
+export type MetadataType = InferInsertModel<typeof metadata>;
+export type VerseType = InferInsertModel<typeof verses>;
 
 async function main() {
-    for (const { folder, file, data } of walkBibles(ROOT)) {
+    for (const { folder: _f, file: _l, data } of walkBibles(ROOT)) {
         const meta: MetadataType = {
             name: data.metadata?.name ?? "Unknown",
             shortname: data.metadata?.shortname ?? "",
@@ -92,7 +92,6 @@ async function main() {
             await db.insert(verses).values(batch);
         }
 
-        console.log(`✅ ${meta.name}: ${versesList.length} verses imported`);
     }
 
     console.log("🎉 All Bible translations imported successfully!");
