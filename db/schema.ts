@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 
@@ -23,7 +24,12 @@ export const metadata = sqliteTable("metadata", {
 	paragraph: text(),
 	official: text(),
 	research: text().notNull(),
-	module_version: text()
+	module_version: text(),
+	updated_at: text()
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+
+	is_synced: int({ mode: "boolean" }).default(true).notNull(),
 })
 
 
@@ -35,4 +41,9 @@ export const verses = sqliteTable("verses", {
 	chapter: text().notNull(),
 	verse: text().notNull(),
 	text: text().notNull(),
+	updated_at: text()
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+
+	is_synced: int({ mode: "boolean" }).default(true).notNull(),
 });
