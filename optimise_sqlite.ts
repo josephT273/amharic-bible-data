@@ -6,7 +6,6 @@ import { bookInfo, metadata, verses } from "./db/schema";
 
 type MetadataType = InferInsertModel<typeof metadata>;
 type VerseType = InferInsertModel<typeof verses>;
-type BookInfoType = InferInsertModel<typeof bookInfo>;
 
 interface Verse {
     verse: string;

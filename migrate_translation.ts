@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { InferInsertModel } from "drizzle-orm";
 import db from "./config";
-import { metadata, verses } from "./db/schema";
+import { metadata, verses, bookInfo } from "./db/schema";
 
 const ROOT = "./bibles";
 
@@ -40,14 +40,28 @@ function* walkBibles(root: string) {
         for (const file of files) {
             const full = path.join(subPath, file);
             if (!file.endsWith(".json")) continue;
-            const data = readJSON(full);
+            const data: ReadJSONType = readJSON(full);
             if (data) yield { folder: dir, file, data };
         }
     }
 }
 
-export type MetadataType = InferInsertModel<typeof metadata>;
-export type VerseType = InferInsertModel<typeof verses>;
+type Verses = {
+    book_name: string,
+    book: string,
+    chapter: string,
+    verse: string,
+    text: string
+};
+
+type ReadJSONType = {
+    metadata: MetadataType,
+    verses: Verses[]
+}
+
+type MetadataType = InferInsertModel<typeof metadata>;
+type VerseType = InferInsertModel<typeof verses>;
+type BookInfoType = InferInsertModel<typeof bookInfo>;
 
 async function main() {
     for (const { folder: _f, file: _l, data } of walkBibles(ROOT)) {
@@ -75,23 +89,50 @@ async function main() {
             module_version: data.metadata?.module_version ?? "",
         };
 
-        const [insertMetadata] = await db.insert(metadata).values(meta).returning();
-        if (insertMetadata?.id === undefined) continue;
-        const versesList: VerseType[] = data.verses.map((v: VerseType) => ({
-            metadataID: insertMetadata.id,
-            book_name: v.book_name?.trim() ?? "",
-            book: String(v.book ?? ""),
-            chapter: String(v.chapter ?? ""),
-            verse: String(v.verse ?? ""),
-            text: v.text ?? "",
-        }));
+        const [insertedMeta] = await db.insert(metadata).values(meta).returning();
+        if (!insertedMeta?.id) continue;
 
-        const BATCH_SIZE = 500;
-        for (let i = 0; i < versesList.length; i += BATCH_SIZE) {
-            const batch = versesList.slice(i, i + BATCH_SIZE);
-            await db.insert(verses).values(batch);
+f        const uniqueBooks = Array.from(
+            new Set(data.verses.map((v: any) => v.book_name.trim()))
+        );
+
+        for (const book of uniqueBooks) {
+            // Count chapters for this book
+            const chapters = new Set(
+                data.verses
+                    .filter((v: any) => v.book_name.trim() === book)
+                    .map((v: any) => Number(v.chapter))
+            );
+
+            const [insertedBook] = await db
+                .insert(bookInfo)
+                .values({
+                    bookName: book,
+                    chapters: chapters.size,
+                    metadataID: insertedMeta.id,
+                })
+                .returning();
+
+            if (!insertedBook?.id) continue;
+
+            // 3️⃣ Prepare and insert verses for this book
+            const versesList: VerseType[] = data.verses
+                .filter((v: any) => v.book_name.trim() === book)
+                .map((v) => ({
+                    bookInfoID: insertedBook.id,
+                    chapter: String(v.chapter),
+                    verse: String(v.verse),
+                    text: v.text,
+                }));
+
+            const BATCH_SIZE = 500;
+            for (let i = 0; i < versesList.length; i += BATCH_SIZE) {
+                const batch = versesList.slice(i, i + BATCH_SIZE);
+                await db.insert(verses).values(batch);
+            }
         }
 
+        console.log(`✅ Imported: ${meta.name}`);
     }
 
     console.log("🎉 All Bible translations imported successfully!");
